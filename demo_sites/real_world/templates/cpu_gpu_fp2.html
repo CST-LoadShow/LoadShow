@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <title>LoadShow</title>
+    <style type="text/css">
+
+        .he{
+            width: 1000px;
+            background: #625050;
+            text-align: center;
+            line-height: 100px;
+        }
+    </style>
+</head>
+
+
+<body translate="no" >
+    <br>
+    <br>
+    <br>
+    <div style="text-align: center;">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" width="800"/>
+        <br>
+        <br>
+        LoadShow: Application Fingerprinting Based on the Combined Characteristics of CPU and GPU
+    </div>
+    <br>
+    <!-- 输入设备名称后，点击Launch开始运行 -->
+    <!-- <br> -->
+    <!-- Device Name: <input id="device_name" type="text" name="name"> -->
+    <!-- <br> -->
+    <!-- Trace number: <input id="repeat_time" type="text" name="name"> -->
+    <br>
+    <pre id="error_report"></pre>
+    <br>
+    <!-- <button onclick="launch()">Launch!</button> -->
+    <br>
+    <pre id="results"></pre>
+    <script id="workerSource" type="javascript/worker">
+        var stallVertexIdLocation, gl, offscreenCan;
+        var numOfVertices = 4;
+        
+        // DRAWNAPART code here
+        const fragment_code = 
+            `#version 300 es
+            precision mediump float;
+            out vec4 outColor;
+            
+            void main(void)
+            {
+                outColor = vec4(1,0,0,1);
+            }
+            `;
+      
+        const vertex_code = 
+            `#version 300 es
+            uniform int cur_stalled_vertex;
+        
+            float stall_function()
+            {
+                float res = 0.01;
+                for(int i = 1; i < 0x3ffff; i++)
+                {
+                    res = sinh(res);
+                }
+                return res;
+            }            
+            
+            void main(void)
+            {
+                if ((cur_stalled_vertex & (1 << gl_VertexID)) != 0) {
+                    gl_Position = vec4(stall_function(),0, 1,1);
+                } else {
+                    gl_Position = vec4(0, 0, 1, 1);
+                }
+        
+                gl_PointSize = 1.0; 
+            
+            }
+            `;
+      
+      
+        async function measureVertex(gl, vertexIndex) {
+            // Configure the stalled vertex index
+            
+            gl.uniform1i(stallVertexIdLocation, vertexIndex);
+            gl.drawArrays(gl.POINTS, 0, numOfVertices);
+        
+        
+            // Measure time
+            var beforeRender = performance.now();
+            blob = await offscreenCan.convertToBlob();
+            var afterRender = performance.now();
+        
+            return {performanceNow: afterRender - beforeRender};
+        }
+      
+      
+        async function prepareAndGo() {
+            // Initalize the offscreen canvas
+            offscreenCan = new OffscreenCanvas(1,1);
+            gl = offscreenCan.getContext("webgl2", {antialias: false});
+      
+      
+            // Prepare to draw
+            prepareToDraw(gl, numOfVertices);
+        
+            // Draw!
+            return ; 
+        }
+        
+        function prepareToDraw(gl, vertexCount) {
+        
+            var vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, vertex_code);
+            gl.compileShader(vertShader);
+            var compiled = gl.getShaderParameter(vertShader, gl.COMPILE_STATUS);
+            if (!compiled) {
+                console.error(gl.getShaderInfoLog(vertShader));
+            }
+        
+            // Fragment shader
+            var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, fragment_code);
+            gl.compileShader(fragShader);
+            compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);
+            if (!compiled) {
+                console.error(gl.getShaderInfoLog(fragShader));
+            }
+        
+            var shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertShader);
+            gl.attachShader(shaderProgram, fragShader);
+            gl.linkProgram(shaderProgram);
+            gl.useProgram(shaderProgram);
+        
+            stallVertexIdLocation = gl.getUniformLocation(shaderProgram, "cur_stalled_vertex");
+        
+        } 
+       
+        async function go(gl) {
+            var startTime = performance.now();
+            var tracesConvertToBlob = new Array;
+          
+            // For each vertex
+            for (vertexId = 0; vertexId < (1 << numOfVertices); vertexId++) {
+                var stallTime = await measureVertex(gl, vertexId);
+                tracesConvertToBlob.push(stallTime);
+            }
+      
+            var endTime = performance.now();
+      
+            resultString = "";
+            //resultString += device_name + ",";
+            //resultString += "gpu,";
+      
+            for(let i = 0; i < tracesConvertToBlob.length; i++){
+                resultString += tracesConvertToBlob[i].performanceNow.toFixed(3) + ",";
+            }
+      
+            //resultString += "Total time for fingerprint: " + (endTime - startTime).toFixed(1) +  " ms";
+            return resultString.slice(0, -1);
+        }
+      
+        onmessage = async function(e) {
+            if (e.data == "prepare and go!") {
+                device_name = "undefined";
+                resultString = await prepareAndGo();
+            } else {
+                device_name = e.data;
+                resultString = "";
+                for (i = 0; i < 64; i++) {
+                    resultString += await go(gl) + "\n";
+                }
+                postMessage(resultString);
+            }
+        }
+    </script>
+
+    <script id="cpuWorkerSource" type="javascript/worker">
+        function stall_function_cpu(arg) {
+            var array = new Uint32Array(arg);
+            var start = performance.now();
+            for (var k = 1; k <= 20000; k++) {
+                crypto.getRandomValues(array);
+            }
+            var end = performance.now();
+            return end - start;
+        }
+        
+        function cpu_FPGeneration(n, m) {
+            var stallTime;
+            var fp = new Array(n);
+            for (var i = 0; i < fp.length; i++){
+                fp[i] = new Array(m).fill(0);
+            }
+            stall_function_cpu(10);
+            for (var i = 0; i < m; i++) {
+                for (var j = 1; j <= n; j++) {
+                    // console.time();
+                    stallTime = stall_function_cpu(j * 50);
+                    console.log(stallTime);
+                    // console.timeEnd();
+                    fp[j - 1][i] = stallTime;
+                }
+            }
+            return fp;
+        }
+        
+        function print_fp(fp) {
+            resString = "";
+            for (var j = 0; j < fp[0].length; j++) {
+                for (var i = 0; i < fp.length; i++) {
+                    resString += fp[i][j].toFixed(1) + ",";
+                }
+                resString = resString.slice(0, -1);
+                resString += "\n";
+            }
+            postMessage(resString);
+        }
+        
+        onmessage = function(e) {
+            var fp = cpu_FPGeneration(16, 64);
+            print_fp(fp);
+        }
+
+        
+    </script>
+
+    <script>
+        var gpuWorker;
+        var cpuWorker;
+        var device_name;
+        var repeat_time = 1;
+        var cur_time;
+        var cpu_finish = 0, gpu_finish = 0;
+
+        window.onload = mainWithThreads;
+
+        Date.prototype.Format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1, //月份 
+                "d+": this.getDate(), //日 
+                "H+": this.getHours(), //小时 
+                "m+": this.getMinutes(), //分 
+                "s+": this.getSeconds(), //秒 
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+                "S": this.getMilliseconds() //毫秒 
+            };
+            if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+
+        function send_to_server(cpu_fp, gpu_fp) {
+            var xhr = new XMLHttpRequest();
+            var cur_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+            if (xhr) {
+                xhr.open("POST", '/get_fingerprint', true);
+                xhr.setRequestHeader('content-Type', 'application/x-www-form-urlencoded');
+                xhr.send("device_name=" + device_name + "&cpu_fingerprint=" + cpu_fp + "&gpu_fingerprint=" + gpu_fp + "&cur_time=" + cur_time);
+            }
+        }
+
+        function send_start_time() {
+            var xhr = new XMLHttpRequest();
+            var cur_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+            if (xhr) {
+                xhr.open("POST", '/get_starttime', true);
+                xhr.setRequestHeader('content-Type', 'application/x-www-form-urlencoded');
+                xhr.send("start_time=" + cur_time);
+            }
+        }
+
+        function set_device_name() {
+            // device_name = document.getElementById("device_name").value;
+            // if (device_name.length == 0) {
+            //     document.getElementById("error_report").innerText = "Please input device label";
+            //     return false;
+            // }
+            device_name = "9600k"
+            return true;
+        }
+
+        function set_repeat_time() {
+            // tmp = document.getElementById("repeat_time").value;
+            // if (tmp.length == 0) {
+            //     document.getElementById("error_report").innerText = "Please input repeat times";
+            //     return false;
+            // }
+            // repeat_time = parseInt(document.getElementById("repeat_time").value);
+            repeat_time = 60;
+            return true;
+        }
+        
+        function launch() {
+            if (!set_device_name() || !set_repeat_time()) {
+                alert("Device name or repeat time empty");
+            } else {
+                cpu_finish = 0;
+                gpu_finish = 0;
+                cpu_fp_str = "";
+                gpu_fp_str = "";
+                document.getElementById("results").innerText = "";
+                send_start_time();
+                cpuWorker.postMessage("Start CPU fingerprinting");
+                // alert("finish");
+            }
+        }
+        
+        function relaunch() {
+            send_start_time();
+            cpuWorker.postMessage("Start CPU fingerprinting");
+        }
+
+        function handleMessageFromWorker(msg) {
+            // put the data in the result div
+            console.log(msg.data);
+            // document.getElementById("results").innerText += msg.data + "\n";
+            gpu_fp_str += msg.data + "\n";
+            repeat_time -= 1;
+            send_to_server(cpu_fp_str, gpu_fp_str);
+            cpu_fp_str = "";
+            gpu_fp_str = "";
+            if (repeat_time != 0) {
+                setTimeout(() => relaunch(), 30000);
+            }
+        }
+
+        function handleCPUMessageFromWorker(msg) {
+            // document.getElementById("results").innerText += msg.data;
+            cpu_fp_str = msg.data;
+            console.log(cpu_fp_str);
+            setTimeout(() => gpuWorker.postMessage(device_name), 5000);
+        }
+
+        function mainWithThreads() {
+            // Create the thread
+            var blob = new Blob([
+                document.querySelector('#workerSource').textContent
+            ], { type: "text/javascript" });
+            gpuWorker = new Worker(window.URL.createObjectURL(blob));
+            gpuWorker.addEventListener('message', handleMessageFromWorker);
+            gpuWorker.postMessage("prepare and go!");
+            // Tell the worker to start.
+            // gpuWorker.postMessage("prepare and go!");
+
+            // cpuWorker = new Worker("static/js/cpufingerprint.js");
+            var blob2 = new Blob([
+                document.querySelector('#cpuWorkerSource').textContent
+            ], {type: "text/javascript"});
+            cpuWorker = new Worker(window.URL.createObjectURL(blob2));
+            cpuWorker.addEventListener('message', handleCPUMessageFromWorker);
+            setTimeout(() => launch(), 5000);
+        }
+    </script>
+</body>

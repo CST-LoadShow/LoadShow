@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fingerprinting Function for CPU</title>
+</head>
+
+<h1>Fingerprinting Function for CPU</h1>
+
+<body translate="no" >
+    <br>
+    Input Device Name and fingerprint number and click Launch to execute.
+    <br>
+    Device Name: <input id="device_name" type="text" name="name">
+    <br>
+    Trace number: <input id="repeat_time" type="text" name="name">
+    <br>
+    <pre id="error_report"></pre>
+    <br>
+    <button onclick="launch()">Launch!</button>
+    <br>
+    <pre id="results"></pre>
+    <script>
+        var repeat_time=1;
+        function stall_function(arg) {
+            var array = new Uint32Array(arg);
+            var start = performance.now();
+            for (var k = 1; k <= 20000; k++) {
+                crypto.getRandomValues(array);
+            }
+            var end = performance.now();
+            return end - start;
+        }
+
+        function FPGeneration(n, m) {
+            var stallTime;
+            var fp = new Array(n);
+            for (var i = 0; i < fp.length; i++){
+                fp[i] = new Array(m).fill(0);
+            }
+            stall_function(10);
+            for (var i = 0; i < m; i++) {
+                for (var j = 1; j <= n; j++) {
+                    // console.time();
+                    stallTime = stall_function(j * 50);
+                    console.log(stallTime);
+                    // console.timeEnd();
+                    fp[j - 1][i] = stallTime;
+                }
+            }
+            return fp;
+        }
+
+        function print_fp(fp) {
+            resString = "";
+            for (var i = 0; i < fp.length; i++) {
+                for (var j = 0; j < fp[i].length; j++) {
+                    resString += fp[i][j].toFixed(1) + ",";
+                }
+                resString = resString.slice(0, -1);
+                resString += "\n";
+            }
+            document.getElementById("results").innerText += resString;
+            send_to_server(resString);
+        }
+
+        function send_to_server(msg) {
+            var xhr = new XMLHttpRequest();
+            if (xhr) {
+                xhr.open("POST", '/get_fingerprint', true);
+                xhr.setRequestHeader('content-Type', 'application/x-www-form-urlencoded');
+                xhr.send("device_name=" + device_name + "&fingerprint=" + msg);
+            }
+        }
+
+        function set_device_name() {
+            device_name = document.getElementById("device_name").value;
+            if (device_name.length == 0) {
+                document.getElementById("error_report").innerText = "Please input device label";
+                return false;
+            }
+            return true;
+        }
+
+        function set_repeat_time() {
+            tmp = document.getElementById("repeat_time").value;
+            if (tmp.length == 0) {
+                document.getElementById("error_report").innerText = "Please input repeat times";
+                return false;
+            }
+            repeat_time = parseInt(document.getElementById("repeat_time").value);
+            return true;
+        }
+
+        function launch() {
+            if (!set_device_name() || !set_repeat_time()) {
+                alert("Device name or repeat time empty");
+            } else {
+                document.getElementById("results").innerText = "";
+                for (var i = 1; i <= repeat_time; i++) {
+                    document.getElementById("results").innerText += "Fingerprint " + i + ":\n";
+                    console.log(i);
+                    var res = FPGeneration(16, 64);
+                    print_fp(res);
+                }
+                alert("finish");
+            }
+        }
+    </script>
+</body>
