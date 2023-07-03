@@ -9,7 +9,9 @@ For most applications, the total time required for LoadShow to collect a set of 
 Link to the demo videos: https://drive.google.com/drive/folders/1i0h3epO5S6i4L1CvpZHhphLg8E0xbnkJ?usp=sharing
 
 ## dataset
-9600k-2060: SOR33, SIR10, SOR8, SOR18, STR18-1, OSOR9
+9600k-2060: SOR33, SOR8, SOR18, STR18-1, OSOR9
+
+9600k-2060-behavior: SIR10
 
 9600k-2060-multi_label: TOR12
 
@@ -17,11 +19,11 @@ e5-k2000: STR18-2
 
 10700-550X: STR18-3
 
-XXX: STR-Mac
+XXX: STR-Mac1, XXX: STR-Mac2
 
 XXX: STR-Pixel
 
-XXX: HSCR18-i
+410-X: HSCR18-i
 
 ## demo_sites
 Fingerprinting functions for extracting the timing data.
