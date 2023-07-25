@@ -1,5 +1,5 @@
 # LoadShow
-Artifacts for "LoadShow: Application Fingerprinting Based on the Combined Characteristics of CPU and GPU".
+Artifacts for "LoadShow: Real-World Fine-Grained Application Fingerprinting via Multi-Source Load Pattern Extraction".
 
 ## Demo Videos
 We evaluate LoadShow in the real world, demonstrating its ability to remotely recognize applications and their in-app actions.
