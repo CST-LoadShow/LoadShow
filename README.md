@@ -8,7 +8,7 @@ For most applications, the total time required for LoadShow to collect a set of 
 
 Link to the demo videos: https://drive.google.com/drive/folders/1i0h3epO5S6i4L1CvpZHhphLg8E0xbnkJ?usp=sharing
 
-## dataset
+## Datasets
 9600k-2060: SOR33, SOR8, SOR18, STR18-1, OSOR9
 
 9600k-2060-behavior: SIR10
@@ -19,17 +19,17 @@ e5-k2000: STR18-2
 
 10700-550X: STR18-3
 
-XXX: STR-Mac1, XXX: STR-Mac2
+Mac1: STR-Mac1, Mac2: STR-Mac2
 
-XXX: STR-Pixel
+Pixel: STR-Pixel
 
 410-X: HSCR18-i
 
 ## demo_sites
-Fingerprinting functions for extracting the timing data.
+Projects for real-world evaluation and webpages that contain fingerprinting functions used for data extraction.
 
 ## utils
-Some files for data processing.
+Files for data processing.
 
 ## Note
 The fp_for_gpu.html in demo_sites is modified on the basis of https://github.com/drawnapart/drawnapart.
