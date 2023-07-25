@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     dataset = CustomTensorDataset((train_data, train_label), 1, transform=False, train=True)
 
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)  # 初始化KFold
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
     acc_list = []
     for i, (train_index, test_index) in enumerate(kf.split(dataset)):
         print(f"============= train {i} fold  ===============")
