@@ -75,7 +75,6 @@ class CustomTensorDataset(Data.Dataset):
         x = self.tensors[0][index]
         y = self.tensors[1][index]
         if self.transform:
-            # x = self.transform(x.numpy().astype(np.uint8))
             x = self.transform(x)
         return x, y
 
