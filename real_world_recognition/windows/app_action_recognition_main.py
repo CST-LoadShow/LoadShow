@@ -134,24 +134,13 @@ if __name__ == "__main__":
 
         print(name[k], label_list[k])
         data_real_world = getRealWorldAction(real_world_file, name[k], label_list[k])
-
         my_traces_timer = pd.read_csv(input_file[k])
-        y_ = my_traces_timer.iloc[:, 0]
-        X_ = my_traces_timer.iloc[:, 1:]
-        y = pd.DataFrame(data_real_world).iloc[:, 0]
-        X = pd.DataFrame(data_real_world).iloc[:, 1:]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        X_train = pd.concat([pd.DataFrame(X_train.values), pd.DataFrame(X_.values)], axis=0)
-        y_train = pd.concat([pd.DataFrame(y_train.values), pd.DataFrame(y_.values)], axis=0)
+        my_traces_timer = np.vstack([my_traces_timer, data_real_world])
+        my_traces_timer = pd.DataFrame(my_traces_timer)
+
+        y = my_traces_timer.iloc[:, 0]
+        X = my_traces_timer.iloc[:, 1:]
+        X_train, y_train = X, y
 
         model = modelTrain(X_train, y_train, 'model/model_%s.pth' % name[k])
-        message, probility, f1 = modelTest(X_test, y_test, model, 'pic/pic_%s.png' % name[k], label_list[k])
-        acc.append(probility)
-        f1_global.append(f1)
-        print("==================   %s   ==================" % name[k])
-        print(message)
-    print(acc)
-    print(f1_global)
-    print(np.mean(f1_global))
-
 

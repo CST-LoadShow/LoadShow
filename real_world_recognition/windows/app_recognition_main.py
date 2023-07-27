@@ -113,10 +113,8 @@ if __name__ == "__main__":
 
     y = my_traces_timer.iloc[:, 0]
     X = my_traces_timer.iloc[:, 1:]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
+    X_train, y_train = X, y
     model = modelTrain(X_train, y_train, 'model/model.pth')
-    message, probility, f1 = modelTest(X_test, y_test, model, 'pic/pic', name)
-    print(message)
+
 
 
