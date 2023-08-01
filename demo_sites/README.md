@@ -43,3 +43,6 @@ Due to the differences in hardware characteristics between different devices and
 | MacOS | `0xffff` | `5000` |
 | Android | `0xffff` | `500` |
 | Android (Real World) | `0xfff` | `500` |
+
+## Note
+The fp_for_gpu.html is modified on the basis of https://github.com/drawnapart/drawnapart.
