@@ -6,7 +6,6 @@ def read_trace(path):
     return list(map(list, zip(*tmp)))
 
 def find_first_peak(fp, n, m):
-    # print (fp)
     fp_first_peak = []
     for i in range(n):
         dic = {}
@@ -15,7 +14,7 @@ def find_first_peak(fp, n, m):
         all_peak = []
         for i in sorted(dic):
             all_peak.append((i, dic[i]))
-        # print (all_peak)
+        
         cur_first_peak = []
         for i in range(1, len(all_peak)):
             if all_peak[i][1] >= all_peak[i - 1][1] and all_peak[i][1] >= all_peak[i + 1][1]:

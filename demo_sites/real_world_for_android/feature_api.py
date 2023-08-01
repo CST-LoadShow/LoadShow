@@ -1,13 +1,10 @@
-import os
+import os as _os
 
-import numpy as np
+import numpy as _np
 import pandas as _pd
 
 
 # The average value
-import pandas as pd
-
-
 def mean_calculator(data: list):
     return sum(data) / len(data)
 
@@ -202,53 +199,53 @@ def getFeature(data):
 
 
 def calculator(f, file_label):
-    f_cpu = os.path.join(f, 'cpu')
-    f_gpu = os.path.join(f, 'gpu')
-    cpu_list1 = os.listdir(f_cpu)
+    f_cpu = _os.path.join(f, 'cpu')
+    f_gpu = _os.path.join(f, 'gpu')
+    cpu_list1 = _os.listdir(f_cpu)
     _ = cpu_list1[0].index('-')
     print(_)
     cpu_list2 = [s[_ + 1:] for s in cpu_list1]
-    gpu_list1 = os.listdir(f_gpu)
+    gpu_list1 = _os.listdir(f_gpu)
     # gpu_list2 = [s[9:] for s in gpu_list1]
     print(cpu_list2)
     # print(gpu_list2)
     m_cpu, m_gpu = 0, 0
     n_cpu, n_gpu = 1000, 1000
     # cpu_95, gpu_95 = 0, 0
-    dataset_cpu, dataset_gpu = np.empty(shape=(64, 16)), np.empty(shape=(64, 16))
+    dataset_cpu, dataset_gpu = _np.empty(shape=(64, 16)), _np.empty(shape=(64, 16))
     for i in range(len(cpu_list1)):
         if cpu_list2[i] not in file_label:
             continue
-        path = os.path.join(f_cpu, cpu_list1[i])
-        fs = os.listdir(path)
+        path = _os.path.join(f_cpu, cpu_list1[i])
+        fs = _os.listdir(path)
         for f in fs:
-            csv_f = os.path.join(path, f)
-            data = pd.read_csv(csv_f, header=None)
+            csv_f = _os.path.join(path, f)
+            data = _pd.read_csv(csv_f, header=None)
             # print(csv_f)
             # 获取所有列，并存入一个数组中
-            data = np.array(data)
+            data = _np.array(data)
             # print(data.shape)
-            dataset_cpu = np.concatenate((dataset_cpu, data), axis=0)
-            maximum_temp = np.max(data)
-            minimum_temp = np.min(data)
+            dataset_cpu = _np.concatenate((dataset_cpu, data), axis=0)
+            maximum_temp = _np.max(data)
+            minimum_temp = _np.min(data)
             if maximum_temp > m_cpu:
                 m_cpu = maximum_temp
             if minimum_temp < n_cpu:
                 n_cpu = minimum_temp
 
         # print(dataset_cpu.shape)
-        path = os.path.join(f_gpu, gpu_list1[i])
+        path = _os.path.join(f_gpu, gpu_list1[i])
 
         # print(path)
-        fs = os.listdir(path)
+        fs = _os.listdir(path)
         for f in fs:
-            feature = np.empty(shape=0)
-            csv_f = os.path.join(path, f)
-            data = pd.read_csv(csv_f, header=None)
-            data = np.array(data)
-            dataset_gpu = np.concatenate((dataset_gpu, data), axis=0)
-            maximum_temp = np.max(data)
-            minimum_temp = np.min(data)
+            feature = _np.empty(shape=0)
+            csv_f = _os.path.join(path, f)
+            data = _pd.read_csv(csv_f, header=None)
+            data = _np.array(data)
+            dataset_gpu = _np.concatenate((dataset_gpu, data), axis=0)
+            maximum_temp = _np.max(data)
+            minimum_temp = _np.min(data)
             if maximum_temp > m_gpu:
                 m_gpu = maximum_temp
             if minimum_temp < n_gpu:

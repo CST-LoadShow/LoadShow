@@ -1,24 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from data_handler import save_fingerprint
 
-# import logging
-
 DEBUG = False
 
 app = Flask(__name__, static_url_path='')
-# app.logger.setLevel(logging.CRITICAL)
-# app.logger.disabled = True
-# log = logging.getLogger('werkzeug')
-# log.setLevel(logging.ERROR)
-# log.handlers.clear()
+
 
 @app.route('/')
 def index():
     return render_template("cpu_gpu_fp2.html")
 
-@app.route('/cpufp.html')
-def offscreen_test():
-    return render_template("cpufp.html")
 
 @app.route('/get_fingerprint', methods=['POST'])
 def get_offscreen_fingerprint():
@@ -29,11 +20,13 @@ def get_offscreen_fingerprint():
     save_fingerprint(device_name, cpu_fingerprint, gpu_fingerprint, cur_time)
     return jsonify({"code":200, "msg":"fingerprint received"})
 
+
 @app.route('/get_starttime', methods=['POST'])
 def get_starttime():
     start_time = request.form["start_time"]
     print(f"[{start_time}] Start Extracting Data")
     return jsonify({"code":200, "msg":"start time received"})
+
 
 if __name__ == "__main__":
     logo = '''ooooo                                  .o8   .oooooo..o oooo
