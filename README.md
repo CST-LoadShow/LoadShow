@@ -30,6 +30,3 @@ Projects for real-world evaluation and webpages that contain fingerprinting func
 
 ## utils
 Files for data processing.
-
-## Note
-The fp_for_gpu.html in demo_sites is modified on the basis of https://github.com/drawnapart/drawnapart.
