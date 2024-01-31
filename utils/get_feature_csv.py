@@ -420,3 +420,80 @@ def get_csv_multi(file_label, f, length, save_path, size, feature_list, size_max
     df.columns = head
     df.to_csv(save_path, index=False)
     return cpu_list2
+
+
+def getCsv_p(file_label, f, length, save_path, size, feature_list, size_max=128):
+    feature_n = len(feature_list)
+    f_cpu = os.path.join(f, 'cpu')
+    f_gpu = os.path.join(f, 'gpu')
+    cpu_list1 = os.listdir(f_cpu)
+    _ = cpu_list1[0].index('-')
+    cpu_list2 = [s[_ + 1:] for s in cpu_list1]
+    gpu_list1 = os.listdir(f_gpu)
+
+    dataset = np.empty(shape=(0, 16 * feature_n * 2))
+    label = []
+    for i in range(len(cpu_list1)):
+        # if cpu_list2[i] not in file_label or cpu_list2[i] == "Tor-watch_video" or cpu_list2[i] == "Tor-web_browse":
+        name = cpu_list1[i].split('-')[1]
+        # name = cpu_list2[i]
+
+        if name not in file_label:
+            continue
+        # print("name", name)
+        path = os.path.join(f_cpu, cpu_list1[i])
+        fs = os.listdir(path)
+        # fs.sort(key=lambda x: int(x[0:-4]))
+        # fs = fs[0: size_max]
+        feature_cpu = np.empty(shape=(0, 16 * feature_n))
+        for k in range(len(fs)):
+            if k >= size_max:
+                break
+            csv_f = os.path.join(path,  fs[k])
+            data = pd.read_csv(csv_f, header=None)
+            data = np.array(data)
+
+            for x in range(data.shape[0] // length):
+                feature = np.empty(shape=0)
+                for j in range(data.shape[1]):
+                    feature = np.concatenate((feature, getFeature(data[x * length:(x + 1) * length, j])))
+
+                feature = np.expand_dims(feature, 0)
+                feature_cpu = np.concatenate((feature_cpu, feature), axis=0)
+
+        feature_gpu = np.empty(shape=(0, 16 * feature_n))
+        path = os.path.join(f_gpu, gpu_list1[i])
+        fs = os.listdir(path)
+        # fs.sort(key=lambda x: int(x[0:-4]))
+        for k in range(len(fs)):
+            if k >= size_max:
+                break
+            csv_f = os.path.join(path, fs[k])
+            data = pd.read_csv(csv_f, header=None)
+            data = np.array(data)
+
+            for x in range(data.shape[0] // length):
+                feature = np.empty(shape=0)
+                for j in range(data.shape[1]):
+                    feature = np.concatenate((feature, getFeature(data[x * length:(x + 1) * length:, j])))
+                feature = np.expand_dims(feature, 0)
+                feature_gpu = np.concatenate((feature_gpu, feature), axis=0)
+
+        count = min(feature_cpu.shape[0], feature_gpu.shape[0])
+        feature_cpu_gpu = np.hstack((feature_cpu[:count, :], feature_gpu[:count, :]))
+        dataset = np.vstack([dataset, feature_cpu_gpu])
+        label += count * [[file_label.index(name)]]
+    label = np.array(label)
+    # print(label.shape)
+    # print(dataset.shape)
+    last_data = np.hstack((label, dataset))
+    s = []
+    for i in range(size):
+        for j in range(feature_n):
+            s.append(str(i) + feature_list[j])
+    s = s + s
+    head = ['label'] + s
+    df = pd.DataFrame(data=last_data)
+    df.columns = head
+    df.to_csv(save_path, index=False)
+    return cpu_list2
