@@ -10,7 +10,7 @@ Link to the demo videos: https://drive.google.com/drive/folders/1i0h3epO5S6i4L1C
 
 ## Android App implementation of LoadShow
 
-Data: 25/3/2024
+Data: 26/3/2024   Folder: android_version
 
 We have recently implemented the Android App version of LoadShow, and the timer resolution has been improved from `ms` level in the web implementation to `ns` level in the Android App implementation.
 
